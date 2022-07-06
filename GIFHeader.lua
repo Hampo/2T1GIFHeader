@@ -1,5 +1,5 @@
 local ScriptName = "GIF Header"
-local Version = "1.0"
+local Version = "1.1"
 
 if GIFHeader then
 	menu.notify("Script already loaded", ScriptName, 10, 0xFF0000FF)
@@ -35,10 +35,11 @@ GIFHeader = true
 
 local Settings = {}
 Settings.EnableHeader = false
+Settings.DrawAboveHeader = true
 
 local function SaveSettings(SettingsFile, SettingsTbl)
 	assert(SettingsFile, "Nil passed for SettingsFile to SaveSettings")
-	assert(SettingsTbl, "Nil passed for SettingsTbl to SaveSettings")
+	assert(type(SettingsTbl) == "table", "Not a table passed for SettingsTbl to SaveSettings")
 	local file = io.open(Paths.Cfg .. "\\" .. SettingsFile .. ".cfg", "w")
 	local keys = {}
 	for k in pairs(SettingsTbl) do
@@ -53,7 +54,7 @@ end
 
 local function LoadSettings(SettingsFile, SettingsTbl)
 	assert(SettingsFile, "Nil passed for SettingsFile to LoadSettings")
-	assert(SettingsTbl, "Nil passed for SettingsTbl to LoadSettings")
+	assert(type(SettingsTbl) == "table", "Not a table passed for SettingsTbl to LoadSettings")
 	SettingsFile = Paths.Cfg .. "\\" .. SettingsFile .. ".cfg"
 	if not utils.file_exists(SettingsFile) then
 		return false
@@ -99,11 +100,17 @@ end
 
 local MenuXFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_x")
 local MenuYFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_y")
+local MenuElementWidthFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_ui.menu_layout.element_width")
 local MenuHeaderAlphaFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_ui.menu_colors.header_alpha")
-local MenuWidth = 480
 
 local ParentId = menu.add_feature(ScriptName, "parent").id
 
+local table_unpack = table.unpack
+local scriptdraw_get_sprite_size = scriptdraw.get_sprite_size
+local scriptdraw_pos_pixel_to_rel_x = scriptdraw.pos_pixel_to_rel_x
+local scriptdraw_pos_pixel_to_rel_y = scriptdraw.pos_pixel_to_rel_y
+local scriptdraw_draw_sprite = scriptdraw.draw_sprite
+local utils_time_ms = utils.time_ms
 local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(f)
 	local lastHeader
 	local frames
@@ -160,25 +167,25 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			menu.notify("Frames registered. Displaying...", ScriptName, 10, 0xFF00FF00)
 			Settings.HeaderDir = rootDirName
 		elseif menu.is_open() then
-			local delay, id = table.unpack(frames[index])
+			local delay, id = table_unpack(frames[index])
 			
-			local spriteSize = scriptdraw.get_sprite_size(id)
-			local scale = MenuWidth / spriteSize.x
+			local spriteSize = scriptdraw_get_sprite_size(id)
+			local scale = MenuElementWidthFeat.value / spriteSize.x
 			spriteSize = spriteSize * scale
 			
 			local menuX = MenuXFeat.value
 			local menuY = MenuYFeat.value
 			
 			local topLeftX = (menuX + spriteSize.x / 2)
-			local topLeftY = (menuY + 1 - spriteSize.y / 2)
+			local topLeftY = Settings.DrawAboveHeader and (menuY + 1 - spriteSize.y / 2) or (menuY + spriteSize.y / 2)
 			
-			local x = scriptdraw.pos_pixel_to_rel_x(topLeftX)
-			local y = scriptdraw.pos_pixel_to_rel_y(topLeftY)
+			local x = scriptdraw_pos_pixel_to_rel_x(topLeftX)
+			local y = scriptdraw_pos_pixel_to_rel_y(topLeftY)
 			
-			scriptdraw.draw_sprite(id, v2(x, y), scale, 0, MenuHeaderAlphaFeat.value << 0x18 | 0xFFFFFF)
+			scriptdraw_draw_sprite(id, v2(x, y), scale, 0, MenuHeaderAlphaFeat.value << 0x18 | 0x00FFFFFF)
 			
 			if nextFrame then
-				if utils.time_ms() >= nextFrame then
+				if utils_time_ms() >= nextFrame then
 					index = index + 1
 					if index > #frames then
 						index = 1
@@ -186,7 +193,7 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 					nextFrame = nil
 				end
 			else
-				nextFrame = utils.time_ms() + delay
+				nextFrame = utils_time_ms() + delay
 			end
 		end
 		system.wait(0)
@@ -200,6 +207,13 @@ if Settings.HeaderDir and headerIndexes[Settings.HeaderDir] then
 end
 if Settings.EnableHeader then
 	enabledFeat.on = true
+end
+
+local drawAboveHeaderFeat = menu.add_feature("Draw Above Header", "toggle", ParentId, function(f)
+	Settings.DrawAboveHeader = f.on
+end)
+if Settings.DrawAboveHeader then
+	drawAboveHeaderFeat.on = true
 end
 
 menu.add_feature("Save Settings", "action", ParentId, function(f)
