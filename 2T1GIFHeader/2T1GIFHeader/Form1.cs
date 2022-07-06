@@ -102,11 +102,11 @@ namespace _2T1GIFHeader
                     bmp.Save(Path.Combine(rootDir, $"{(i + 1).ToString().PadLeft(padding, '0')}_{length}.png"));
                 }
 
-                MessageBox.Show($"Successfully exported {frameCount} frames.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Successfully exported {frameCount} frames.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"There was an error processing the GIF: {ex}", "Error processing", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show($"There was an error processing the GIF: {ex}", "Error processing", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
         }
