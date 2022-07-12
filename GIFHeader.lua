@@ -6,15 +6,6 @@ if GIFHeader then
 	return
 end
 
-local is_open = menu.is_open
-local AddMenuOpen = is_open == nil
-local menu_open = false
-if AddMenuOpen then
-	is_open = function()
-		return menu_open
-	end
-end
-
 local Paths = {}
 Paths.Root = utils.get_appdata_path("PopstarDevs", "2Take1Menu")
 Paths.Cfg = Paths.Root .. "\\cfg"
@@ -114,6 +105,8 @@ local MenuXFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_x")
 local MenuYFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_y")
 local MenuElementWidthFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_ui.menu_layout.element_width")
 local MenuHeaderAlphaFeat = menu.get_feature_by_hierarchy_key("local.settings.menu_ui.menu_colors.header_alpha")
+
+local is_open = menu.is_open
 
 local ParentId = menu.add_feature(ScriptName, "parent").id
 
@@ -290,35 +283,3 @@ menu.add_feature("Save Settings", "action", ParentId, function(f)
 	SaveSettings(ScriptName, Settings)
 	menu.notify("Settings saved successfully.", ScriptName, 10, 0xFF00FF00)
 end)
-
-
-if AddMenuOpen then
-	local key = MenuKey()
-	local openKey
-	for line in io.lines(Paths.Root .. "\\2Take1Menu.ini") do
-		local key, value = line:match("^(.-)%=(.-)$")
-		if key == "Menu" then
-			openKey = value
-			break
-		end
-	end
-	if openKey == nil then
-		menu_open = true
-	else
-		key:push_str(openKey)
-		menu.create_thread(function(key)
-			local lastPressed = false
-			while true do
-				local pressed = key:is_down()
-				if pressed and not lastPressed then
-					menu_open = not menu_open
-				end
-				lastPressed = pressed
-				system.wait(0)
-			end
-		end, key)
-		menu.add_feature("Set Menu Open", "action", ParentId, function(f)
-			menu_open = true
-		end)
-	end
-end

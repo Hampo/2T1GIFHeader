@@ -2,17 +2,14 @@
 A Lua script to add GIF headers to 2T1, along with a tool to extract frames from a GIF.
 
 ## Script setup
-* Download `GIFHeader.lua` and place in `%appdata%\PopstarDevs\2Take1Menu\scripts`.
-* Create a folder called `GIFHeader` in the same directory.
-* Create a folder in the `GIFHeader` folder with the name of your header.
-* Place frames in that folder.
-* Download `NoHeader.png` and place in `%appdata%\PopstarDevs\2Take1Menu\ui\headers`.
-* Enable `NoHeader` in 2T1.
+* Download `GIFHeader.zip`
+* Extract to `%appdata%\PopstarDevs\2Take1Menu`.
+* Launch menu.
+* Enable `NoHeader` in 2T1 Menu UI.
 
-## Frame extraction
+## Creating a headers
 * Download `2T1GIFHeader.zip` and extract.
 * Execute `2T1GIFHeader.exe`.
 * Browse for an input GIF.
-* Choose an output folder.
+* Choose an output folder. The script uses `%appdata%\PopstarDevs\2Take1Menu\scripts\GIFHeader\HEADER NAME`.
 * Press process.
-* Follow above steps to add to 2T1.
