@@ -248,7 +248,7 @@ local yOffsetFeat = menu.add_feature("Y Offset", "autoaction_value_i", ParentId,
 		repeat
 			r, s = input.get("Enter Y Offset", f.value, 4, eInputType.IT_NUM)
 			if r == 2 then return end
-			wait(0)
+			system.wait(0)
 		until r == 0
 		
 		s = tonumber(s)
