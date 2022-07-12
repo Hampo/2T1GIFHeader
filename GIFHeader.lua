@@ -1,5 +1,5 @@
 local ScriptName = "GIF Header"
-local Version = "1.2"
+local Version = "1.3"
 
 if GIFHeader then
 	menu.notify("Script already loaded", ScriptName, 10, 0xFF0000FF)
@@ -133,7 +133,7 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			nextFrame = nil
 			
 			local rootDirName = headerDirs[f.value + 1]
-			print("Loading frames from: " .. rootDirName, ScriptName, 10, 0xFF00FFFF)
+			print("Loading frames from: " .. rootDirName)
 			
 			local rootDir = Paths.GIFHeader .. "\\" .. rootDirName
 			if not utils.dir_exists(rootDir) then
@@ -142,10 +142,10 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 				return
 			end
 			
-			local files = utils.get_all_files_in_directory(rootDir, "png")
+			local files = utils.get_all_files_in_directory(rootDir, "gif")
 			for i=1,#files do
 				local file = files[i]
-				local frame, delay = file:match("^(%d+)%_(%d+).png$")
+				local frame, delay = file:match("^(%d+)%_(%d+).gif$")
 				frame, delay = tonumber(frame), tonumber(delay)
 				if not frame or not delay then
 					menu.notify("Invalid frame found: " .. file, ScriptName, 10, 0xFF0000FF)
@@ -157,12 +157,28 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			end
 			
 			if #frames == 0 then
-				menu.notify("No frames found in: " .. rootDirName, ScriptName, 10, 0xFF0000FF)
-				f.on = false
-				return
+				files = utils.get_all_files_in_directory(rootDir, "png")
+				for i=1,#files do
+					local file = files[i]
+					local frame, delay = file:match("^(%d+)%_(%d+).png$")
+					frame, delay = tonumber(frame), tonumber(delay)
+					if not frame or not delay then
+						menu.notify("Invalid frame found: " .. file, ScriptName, 10, 0xFF0000FF)
+						f.on = false
+						return
+					else
+						frames[frame] = {delay, rootDir .. "\\" .. file}
+					end
+				end
+				
+				if #frames == 0 then
+					menu.notify("No frames found in: " .. rootDirName, ScriptName, 10, 0xFF0000FF)
+					f.on = false
+					return
+				end
 			end
 			
-			print("Found " .. #frames .. " frames. Displaying...", ScriptName, 10, 0xFF00FFFF)
+			print("Found " .. #frames .. " frames. Displaying...")
 			Settings.HeaderDir = rootDirName
 		elseif is_open() then
 			local delay, path, id = table_unpack(frames[index])
@@ -186,7 +202,7 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			local y = scriptdraw_pos_pixel_to_rel_y(topLeftY)
 			
 			local alpha = Settings.CustomAlpha and Settings.AlphaValue or MenuHeaderAlphaFeat.value
-			scriptdraw_draw_sprite(id, v2(x, y), scale, 0, alpha << 0x18 | 0x00FFFFFF)
+			scriptdraw_draw_sprite(id, v2(x, y), scale, 0, alpha << 0x18 | 0xFFFFFF)
 			
 			if nextFrame then
 				if utils_time_ms() >= nextFrame then
