@@ -34,7 +34,10 @@
             this.GBOutput = new System.Windows.Forms.GroupBox();
             this.TxtOutputFolder = new System.Windows.Forms.TextBox();
             this.GBProcess = new System.Windows.Forms.GroupBox();
+            this.RBGIF = new System.Windows.Forms.RadioButton();
+            this.RBPNG = new System.Windows.Forms.RadioButton();
             this.BtnProcess = new System.Windows.Forms.Button();
+            this.RBBMP = new System.Windows.Forms.RadioButton();
             this.GBInput.SuspendLayout();
             this.GBOutput.SuspendLayout();
             this.GBProcess.SuspendLayout();
@@ -92,6 +95,9 @@
             // 
             this.GBProcess.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.GBProcess.Controls.Add(this.RBBMP);
+            this.GBProcess.Controls.Add(this.RBGIF);
+            this.GBProcess.Controls.Add(this.RBPNG);
             this.GBProcess.Controls.Add(this.BtnProcess);
             this.GBProcess.Location = new System.Drawing.Point(12, 106);
             this.GBProcess.Name = "GBProcess";
@@ -100,16 +106,47 @@
             this.GBProcess.TabStop = false;
             this.GBProcess.Text = "Process";
             // 
+            // RBGIF
+            // 
+            this.RBGIF.AutoSize = true;
+            this.RBGIF.Location = new System.Drawing.Point(61, 21);
+            this.RBGIF.Name = "RBGIF";
+            this.RBGIF.Size = new System.Drawing.Size(42, 19);
+            this.RBGIF.TabIndex = 2;
+            this.RBGIF.Text = "GIF";
+            this.RBGIF.UseVisualStyleBackColor = true;
+            // 
+            // RBPNG
+            // 
+            this.RBPNG.AutoSize = true;
+            this.RBPNG.Checked = true;
+            this.RBPNG.Location = new System.Drawing.Point(6, 21);
+            this.RBPNG.Name = "RBPNG";
+            this.RBPNG.Size = new System.Drawing.Size(49, 19);
+            this.RBPNG.TabIndex = 1;
+            this.RBPNG.TabStop = true;
+            this.RBPNG.Text = "PNG";
+            this.RBPNG.UseVisualStyleBackColor = true;
+            // 
             // BtnProcess
             // 
-            this.BtnProcess.Dock = System.Windows.Forms.DockStyle.Top;
-            this.BtnProcess.Location = new System.Drawing.Point(3, 19);
+            this.BtnProcess.Location = new System.Drawing.Point(165, 19);
             this.BtnProcess.Name = "BtnProcess";
-            this.BtnProcess.Size = new System.Drawing.Size(322, 23);
+            this.BtnProcess.Size = new System.Drawing.Size(160, 23);
             this.BtnProcess.TabIndex = 0;
             this.BtnProcess.Text = "Split GIF Into Frames";
             this.BtnProcess.UseVisualStyleBackColor = true;
             this.BtnProcess.Click += new System.EventHandler(this.BtnProcess_Click);
+            // 
+            // RBBMP
+            // 
+            this.RBBMP.AutoSize = true;
+            this.RBBMP.Location = new System.Drawing.Point(109, 21);
+            this.RBBMP.Name = "RBBMP";
+            this.RBBMP.Size = new System.Drawing.Size(50, 19);
+            this.RBBMP.TabIndex = 3;
+            this.RBBMP.Text = "BMP";
+            this.RBBMP.UseVisualStyleBackColor = true;
             // 
             // Form1
             // 
@@ -129,6 +166,7 @@
             this.GBOutput.ResumeLayout(false);
             this.GBOutput.PerformLayout();
             this.GBProcess.ResumeLayout(false);
+            this.GBProcess.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -141,5 +179,8 @@
         private GroupBox GBProcess;
         private TextBox TxtOutputFolder;
         private Button BtnProcess;
+        private RadioButton RBGIF;
+        private RadioButton RBPNG;
+        private RadioButton RBBMP;
     }
 }

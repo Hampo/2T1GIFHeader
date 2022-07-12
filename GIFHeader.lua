@@ -1,5 +1,5 @@
 local ScriptName = "GIF Header"
-local Version = "1.3"
+local Version = "1.4"
 
 if GIFHeader then
 	menu.notify("Script already loaded", ScriptName, 10, 0xFF0000FF)
@@ -110,6 +110,8 @@ local is_open = menu.is_open
 
 local ParentId = menu.add_feature(ScriptName, "parent").id
 
+local filetypes = {"gif", "bmp", "png"}
+
 local table_unpack = table.unpack
 local scriptdraw_register_sprite = scriptdraw.register_sprite
 local scriptdraw_get_sprite_size = scriptdraw.get_sprite_size
@@ -142,25 +144,12 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 				return
 			end
 			
-			local files = utils.get_all_files_in_directory(rootDir, "gif")
-			for i=1,#files do
-				local file = files[i]
-				local frame, delay = file:match("^(%d+)%_(%d+).gif$")
-				frame, delay = tonumber(frame), tonumber(delay)
-				if not frame or not delay then
-					menu.notify("Invalid frame found: " .. file, ScriptName, 10, 0xFF0000FF)
-					f.on = false
-					return
-				else
-					frames[frame] = {delay, rootDir .. "\\" .. file}
-				end
-			end
-			
-			if #frames == 0 then
-				files = utils.get_all_files_in_directory(rootDir, "png")
-				for i=1,#files do
-					local file = files[i]
-					local frame, delay = file:match("^(%d+)%_(%d+).png$")
+			for i=1,#filetypes do
+				local ext = filetypes[i]
+				local files = utils.get_all_files_in_directory(rootDir, ext)
+				for j=1,#files do
+					local file = files[j]
+					local frame, delay = file:match("^(%d+)%_(%d+)." .. ext .. "$")
 					frame, delay = tonumber(frame), tonumber(delay)
 					if not frame or not delay then
 						menu.notify("Invalid frame found: " .. file, ScriptName, 10, 0xFF0000FF)
@@ -170,12 +159,15 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 						frames[frame] = {delay, rootDir .. "\\" .. file}
 					end
 				end
-				
-				if #frames == 0 then
-					menu.notify("No frames found in: " .. rootDirName, ScriptName, 10, 0xFF0000FF)
-					f.on = false
-					return
+				if #frames > 0 then
+					break
 				end
+			end
+			
+			if #frames == 0 then
+				menu.notify("No frames found in: " .. rootDirName, ScriptName, 10, 0xFF0000FF)
+				f.on = false
+				return
 			end
 			
 			print("Found " .. #frames .. " frames. Displaying...")

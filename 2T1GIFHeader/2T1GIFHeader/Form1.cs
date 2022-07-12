@@ -97,8 +97,14 @@ namespace _2T1GIFHeader
                 {
                     gif.SelectActiveFrame(fd, i);
                     int length = BitConverter.ToInt32(lengths, 4 * i) * 10;
+                    string fileName = Path.Combine(rootDir, $"{(i + 1).ToString().PadLeft(padding, '0')}_{length}");
                     using Bitmap bmp = (Bitmap)gif.Clone();
-                    bmp.Save(Path.Combine(rootDir, $"{(i + 1).ToString().PadLeft(padding, '0')}_{length}.gif"), ImageFormat.Gif);
+                    if (RBPNG.Checked)
+                        bmp.Save($"{fileName}.png", ImageFormat.Png);
+                    else if (RBGIF.Checked)
+                        bmp.Save($"{fileName}.gif", ImageFormat.Gif);
+                    else if (RBBMP.Checked)
+                        bmp.Save($"{fileName}.bmp", ImageFormat.Bmp);
                 }
 
                 MessageBox.Show($"Successfully exported {frameCount} frames.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
