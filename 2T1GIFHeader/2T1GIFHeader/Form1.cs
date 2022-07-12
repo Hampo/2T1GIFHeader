@@ -13,6 +13,7 @@ namespace _2T1GIFHeader
         {
             using OpenFileDialog ofd = new()
             {
+                InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
                 FileName = TxtInputGIF.Text,
                 Filter = "GIF Images|*.gif",
                 CheckFileExists = true,
@@ -96,10 +97,8 @@ namespace _2T1GIFHeader
                 {
                     gif.SelectActiveFrame(fd, i);
                     int length = BitConverter.ToInt32(lengths, 4 * i) * 10;
-                    using Bitmap bmp = new(gif.Size.Width, gif.Size.Height);
-                    using Graphics g = Graphics.FromImage(bmp);
-                    g.DrawImage(gif, new Rectangle(0, 0, bmp.Width, bmp.Height));
-                    bmp.Save(Path.Combine(rootDir, $"{(i + 1).ToString().PadLeft(padding, '0')}_{length}.png"));
+                    using Bitmap bmp = (Bitmap)gif.Clone();
+                    bmp.Save(Path.Combine(rootDir, $"{(i + 1).ToString().PadLeft(padding, '0')}_{length}.gif"), ImageFormat.Gif);
                 }
 
                 MessageBox.Show($"Successfully exported {frameCount} frames.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
