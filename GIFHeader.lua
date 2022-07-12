@@ -6,6 +6,15 @@ if GIFHeader then
 	return
 end
 
+local is_open = menu.is_open
+local AddMenuOpen = is_open == nil
+local menu_open = false
+if AddMenuOpen then
+	is_open = function()
+		return menu_open
+	end
+end
+
 local Paths = {}
 Paths.Root = utils.get_appdata_path("PopstarDevs", "2Take1Menu")
 Paths.Cfg = Paths.Root .. "\\cfg"
@@ -38,11 +47,12 @@ Settings.EnableHeader = false
 Settings.DrawAboveHeader = true
 Settings.CustomAlpha = false
 Settings.AlphaValue = 160
+Settings.YOffset = 1
 
 local function SaveSettings(SettingsFile, SettingsTbl)
 	assert(SettingsFile, "Nil passed for SettingsFile to SaveSettings")
 	assert(type(SettingsTbl) == "table", "Not a table passed for SettingsTbl to SaveSettings")
-	local file = io.open(Paths.Cfg .. "\\" .. SettingsFile .. ".cfg", "w")
+	local file <close> = io.open(Paths.Cfg .. "\\" .. SettingsFile .. ".cfg", "w")
 	local keys = {}
 	for k in pairs(SettingsTbl) do
 		keys[#keys + 1] = k
@@ -161,7 +171,7 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			
 			print("Found " .. #frames .. " frames. Displaying...", ScriptName, 10, 0xFF00FFFF)
 			Settings.HeaderDir = rootDirName
-		elseif menu.is_open() then
+		elseif is_open() then
 			local delay, path, id = table_unpack(frames[index])
 			if id == nil then
 				id = scriptdraw_register_sprite(path)
@@ -176,7 +186,8 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			local menuY = MenuYFeat.value
 			
 			local topLeftX = (menuX + spriteSize.x / 2)
-			local topLeftY = Settings.DrawAboveHeader and (menuY + 1 - spriteSize.y / 2) or (menuY + spriteSize.y / 2)
+			local rootY = menuY + Settings.YOffset
+			local topLeftY = Settings.DrawAboveHeader and (rootY - spriteSize.y / 2) or (rootY + spriteSize.y / 2)
 			
 			local x = scriptdraw_pos_pixel_to_rel_x(topLeftX)
 			local y = scriptdraw_pos_pixel_to_rel_y(topLeftY)
@@ -224,10 +235,10 @@ customAlphaFeat.min = 1
 customAlphaFeat.max = 255
 customAlphaFeat.mod = 1
 if type(Settings.AlphaValue) == "number" then
-	if Settings.AlphaValue > 255 then
-		customAlphaFeat.vaelu = 255
-	elseif Settings.AlphaValue < 1 then
-		customAlphaFeat.value = 1
+	if Settings.AlphaValue > customAlphaFeat.max then
+		customAlphaFeat.vaelu = customAlphaFeat.max
+	elseif Settings.AlphaValue < customAlphaFeat.min then
+		customAlphaFeat.value = customAlphaFeat.min
 	else
 		customAlphaFeat.value = Settings.AlphaValue
 	end
@@ -238,6 +249,40 @@ if Settings.CustomAlpha then
 	customAlphaFeat.on = true
 end
 
+local yOffsetFeat = menu.add_feature("Y Offset", "autoaction_value_i", ParentId, function(f)
+	if f.value == Settings.YOffset then
+		local r, s
+		repeat
+			r, s = input.get("Enter Y Offset", f.value, 4, eInputType.IT_NUM)
+			if r == 2 then return end
+			wait(0)
+		until r == 0
+		
+		s = tonumber(s)
+		if s > f.max then
+			s = f.max
+		elseif s < f.min then
+			s = f.min
+		end
+		f.value = s
+	end
+	Settings.YOffset = f.value
+end)
+yOffsetFeat.min = -500
+yOffsetFeat.max = 500
+yOffsetFeat.mod = 1
+if type(Settings.YOffset) == "number" then
+	if Settings.YOffset > yOffsetFeat.max then
+		yOffsetFeat.vaelu = yOffsetFeat.max
+	elseif Settings.YOffset < yOffsetFeat.min then
+		yOffsetFeat.value = yOffsetFeat.min
+	else
+		yOffsetFeat.value = Settings.YOffset
+	end
+else
+	yOffsetFeat.value = 1
+end
+
 menu.add_feature("Save Settings", "action", ParentId, function(f)
 	Settings.EnableHeader = enabledFeat.on
 	Settings.CustomAlpha = customAlphaFeat.on
@@ -245,3 +290,35 @@ menu.add_feature("Save Settings", "action", ParentId, function(f)
 	SaveSettings(ScriptName, Settings)
 	menu.notify("Settings saved successfully.", ScriptName, 10, 0xFF00FF00)
 end)
+
+
+if AddMenuOpen then
+	local key = MenuKey()
+	local openKey
+	for line in io.lines(Paths.Root .. "\\2Take1Menu.ini") do
+		local key, value = line:match("^(.-)%=(.-)$")
+		if key == "Menu" then
+			openKey = value
+			break
+		end
+	end
+	if openKey == nil then
+		menu_open = true
+	else
+		key:push_str(openKey)
+		menu.create_thread(function(key)
+			local lastPressed = false
+			while true do
+				local pressed = key:is_down()
+				if pressed and not lastPressed then
+					menu_open = not menu_open
+				end
+				lastPressed = pressed
+				system.wait(0)
+			end
+		end, key)
+		menu.add_feature("Set Menu Open", "action", ParentId, function(f)
+			menu_open = true
+		end)
+	end
+end
