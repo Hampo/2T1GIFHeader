@@ -1,5 +1,5 @@
 local ScriptName = "GIF Header"
-local Version = "1.1"
+local Version = "1.2"
 
 if GIFHeader then
 	menu.notify("Script already loaded", ScriptName, 10, 0xFF0000FF)
@@ -36,6 +36,8 @@ GIFHeader = true
 local Settings = {}
 Settings.EnableHeader = false
 Settings.DrawAboveHeader = true
+Settings.CustomAlpha = false
+Settings.AlphaValue = 160
 
 local function SaveSettings(SettingsFile, SettingsTbl)
 	assert(SettingsFile, "Nil passed for SettingsFile to SaveSettings")
@@ -90,7 +92,7 @@ local function UnregisterSprits(frames)
 	end
 	
 	for i=1,#frames do
-		local id = frames[i][2]
+		local id = frames[i][3]
 		if type(id) == "number" then
 			print("Unregistering sprite ID: " ..id)
 			system.wait(0)
@@ -106,6 +108,7 @@ local MenuHeaderAlphaFeat = menu.get_feature_by_hierarchy_key("local.settings.me
 local ParentId = menu.add_feature(ScriptName, "parent").id
 
 local table_unpack = table.unpack
+local scriptdraw_register_sprite = scriptdraw.register_sprite
 local scriptdraw_get_sprite_size = scriptdraw.get_sprite_size
 local scriptdraw_pos_pixel_to_rel_x = scriptdraw.pos_pixel_to_rel_x
 local scriptdraw_pos_pixel_to_rel_y = scriptdraw.pos_pixel_to_rel_y
@@ -127,7 +130,7 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			nextFrame = nil
 			
 			local rootDirName = headerDirs[f.value + 1]
-			menu.notify("Loading frames from: " .. rootDirName, ScriptName, 10, 0xFF00FFFF)
+			print("Loading frames from: " .. rootDirName, ScriptName, 10, 0xFF00FFFF)
 			
 			local rootDir = Paths.GIFHeader .. "\\" .. rootDirName
 			if not utils.dir_exists(rootDir) then
@@ -156,18 +159,14 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 				return
 			end
 			
-			menu.notify("Found " .. #frames .. " frames. Registering...", ScriptName, 10, 0xFF00FFFF)
-			
-			for i=1,#frames do
-				local id = scriptdraw.register_sprite(frames[i][2])
-				frames[i][2] = id
-				system.wait(0)
-			end
-			
-			menu.notify("Frames registered. Displaying...", ScriptName, 10, 0xFF00FF00)
+			print("Found " .. #frames .. " frames. Displaying...", ScriptName, 10, 0xFF00FFFF)
 			Settings.HeaderDir = rootDirName
 		elseif menu.is_open() then
-			local delay, id = table_unpack(frames[index])
+			local delay, path, id = table_unpack(frames[index])
+			if id == nil then
+				id = scriptdraw_register_sprite(path)
+				frames[index][3] = id
+			end
 			
 			local spriteSize = scriptdraw_get_sprite_size(id)
 			local scale = MenuElementWidthFeat.value / spriteSize.x
@@ -182,7 +181,8 @@ local enabledFeat = menu.add_feature("Enabled", "value_str", ParentId, function(
 			local x = scriptdraw_pos_pixel_to_rel_x(topLeftX)
 			local y = scriptdraw_pos_pixel_to_rel_y(topLeftY)
 			
-			scriptdraw_draw_sprite(id, v2(x, y), scale, 0, MenuHeaderAlphaFeat.value << 0x18 | 0x00FFFFFF)
+			local alpha = Settings.CustomAlpha and Settings.AlphaValue or MenuHeaderAlphaFeat.value
+			scriptdraw_draw_sprite(id, v2(x, y), scale, 0, alpha << 0x18 | 0x00FFFFFF)
 			
 			if nextFrame then
 				if utils_time_ms() >= nextFrame then
@@ -216,8 +216,32 @@ if Settings.DrawAboveHeader then
 	drawAboveHeaderFeat.on = true
 end
 
+local customAlphaFeat = menu.add_feature("Custom Header Alpha", "value_i", ParentId, function(f)
+	Settings.CustomAlpha = f.on
+	Settings.AlphaValue = f.value
+end)
+customAlphaFeat.min = 1
+customAlphaFeat.max = 255
+customAlphaFeat.mod = 1
+if type(Settings.AlphaValue) == "number" then
+	if Settings.AlphaValue > 255 then
+		customAlphaFeat.vaelu = 255
+	elseif Settings.AlphaValue < 1 then
+		customAlphaFeat.value = 1
+	else
+		customAlphaFeat.value = Settings.AlphaValue
+	end
+else
+	customAlphaFeat.value = 160
+end
+if Settings.CustomAlpha then
+	customAlphaFeat.on = true
+end
+
 menu.add_feature("Save Settings", "action", ParentId, function(f)
 	Settings.EnableHeader = enabledFeat.on
+	Settings.CustomAlpha = customAlphaFeat.on
+	Settings.AlphaValue = customAlphaFeat.value
 	SaveSettings(ScriptName, Settings)
 	menu.notify("Settings saved successfully.", ScriptName, 10, 0xFF00FF00)
 end)
